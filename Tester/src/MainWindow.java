@@ -24,13 +24,13 @@ public class MainWindow extends JFrame {
 	private JRadioButton describedButton = new JRadioButton("Described");
 	private ButtonGroup bg = new ButtonGroup();
 	private int category = -1;
-	
+	private int markedCategory = 3;
 
 	private Map<Integer, Set<Place>> categoryMap = new HashMap<>();
 	private Map<Position, Place> positionMap = new HashMap<>();
 	private Map<String, Set<Place>> nameMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-	private ArrayList<Place> test = new ArrayList<Place>();
-	// private Map<,Set<Place>>hideMap=new TreeMap<>();
+	private ArrayList<Place> markedList = new ArrayList<Place>();
+	private Map<Place, Place> markedMap = new HashMap<>();
 
 	public MainWindow() {
 		super("Inlupp 2");
@@ -59,7 +59,7 @@ public class MainWindow extends JFrame {
 		bg.add(namedButton);
 		bg.add(describedButton);
 		north.add(searchField);
-		searchField.addMouseListener(new SearchListener());
+		searchField.addFocusListener(new SearchListener());
 
 		FileFilter ff = new FileNameExtensionFilter("Pictures", "jpg", "gif", "png");
 		jfc.setFileFilter(ff);
@@ -82,7 +82,7 @@ public class MainWindow extends JFrame {
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setSize(630, 220);
-		setLocation(400, 100);
+		setLocation(250, 40);
 		validate();
 		repaint();
 		setVisible(true);
@@ -150,7 +150,8 @@ public class MainWindow extends JFrame {
 
 							nameMap.put(dp.getName(), namedPlaces);
 							positionMap.put(position, dp);
-							test.add(dp);
+							markedMap.put(dp, dp);
+							dp.addFocusListener(new MarkListener());
 							emptyNameField = false;
 						}
 					}
@@ -165,7 +166,7 @@ public class MainWindow extends JFrame {
 						if (answer != JOptionPane.OK_OPTION)
 							return;
 						if (npf.getName().equals("")) {
-							JOptionPane.showMessageDialog(MainWindow.this, "Platsen mÃ¥ste ha ett namn", "Fel",
+							JOptionPane.showMessageDialog(MainWindow.this, "Platsen måste ha ett namn", "Fel",
 									JOptionPane.ERROR_MESSAGE);
 
 						} else {
@@ -179,7 +180,8 @@ public class MainWindow extends JFrame {
 							}
 							nameMap.put(np.getName(), namedPlaces);
 							positionMap.put(position, np);
-							test.add(np);
+							markedMap.put(np, np);
+							np.addFocusListener(new MarkListener());
 							emptyNameField = false;
 						}
 
@@ -240,10 +242,8 @@ public class MainWindow extends JFrame {
 						String name = searchField.getText();
 						Set<Place> namedPlaces = nameMap.get(name);
 
-						if (namedPlaces != null) {
+						if (!namedPlaces.isEmpty()) {
 							namedPlaces.forEach(p -> p.setVisible(true));
-							namedPlaces.forEach(p -> p.setFocus(true));
-							namedPlaces.forEach(p -> p.setFocusable(true));
 							namedPlaces.forEach(p -> p.requestFocusInWindow());
 
 						} else {
@@ -254,21 +254,41 @@ public class MainWindow extends JFrame {
 						}
 					} else if (str.equals("Hide")) {
 
-					
-						
-						for (Place p : test) {
-							if (p.getInFocus() == true) {
-								p.setVisible(false);
-								p.setFocus(false);
-								p.setFocusable(true);
-								p.requestFocusInWindow();
+						if (!markedList.isEmpty()) {
+							for (Place p : markedList) {
+								if (p.getInFocus() == true) {
+									p.setVisible(false);
+									p.requestFocusInWindow();
 
+								}
 							}
-
-					
 						}
 
 					} else if (str.equals("Remove")) {
+
+						if (!markedList.isEmpty()) {
+							for (Place p : markedList) {
+								if (p.getInFocus() == true) {
+									Set<Place> namedPlaces = nameMap.get(p.getName());
+									for (Place place : namedPlaces) {
+										if (place.equals(p)) {
+											nameMap.get(place.getName()).remove(p);
+											return;
+										}
+									}
+									categoryMap.remove(p.getCategory());
+									positionMap.remove(p.getPosition());
+									markedMap.remove(p);
+									mp.remove(p);
+
+								}
+
+							}
+							validate();
+							repaint();
+							markedList.clear();
+						}
+
 					} else if (str.equals("Coordinates")) {
 						InputCoordinates ic = new InputCoordinates();
 						int answer = JOptionPane.showConfirmDialog(MainWindow.this, ic, "Input coordinates",
@@ -289,13 +309,15 @@ public class MainWindow extends JFrame {
 		@Override
 		public void mouseClicked(MouseEvent mev) {
 
-			category = jList.getSelectedIndex();
-			Set<Place> places = categoryMap.get(category);
-
-			if (places != null) {
-				places.forEach(p -> p.setVisible(true));
-			}
-
+			if (markedCategory != jList.getSelectedIndex()) {
+				category = jList.getSelectedIndex();
+				Set<Place> places = categoryMap.get(category);
+				if (places != null) {
+					places.forEach(p -> p.setVisible(true));
+				}
+				markedCategory = jList.getSelectedIndex();
+			} else
+				jList.clearSelection();
 		}
 	}
 
@@ -314,13 +336,35 @@ public class MainWindow extends JFrame {
 		}
 	}
 
-	class SearchListener extends MouseAdapter {
+	class SearchListener implements FocusListener {
 
-		public void mouseClicked(MouseEvent mev) {
+		public void focusGained(FocusEvent fev) {
 
 			searchField.setText("");
 
 		}
+
+		public void focusLost(FocusEvent fev) {
+			String s = searchField.getText();
+			if (s.equals("")) {
+				searchField.setText("Search");
+			}
+		}
 	}
-	
+
+	class MarkListener implements FocusListener {
+
+		public void focusGained(FocusEvent fev) {
+
+			Place place = (Place) fev.getSource();
+			place = markedMap.get(place);
+			markedList.add(place);
+
+		}
+
+		public void focusLost(FocusEvent fev) {
+
+		}
+
+	}
 }
