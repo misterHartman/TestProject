@@ -24,7 +24,6 @@ public class MainWindow extends JFrame {
 	private JRadioButton describedButton = new JRadioButton("Described");
 	private ButtonGroup bg = new ButtonGroup();
 	private int category = -1;
-	private int markedCategory = 3;
 
 	private Map<Integer, Set<Place>> categoryMap = new HashMap<>();
 	private Map<Position, Place> positionMap = new HashMap<>();
@@ -309,15 +308,17 @@ public class MainWindow extends JFrame {
 		@Override
 		public void mouseClicked(MouseEvent mev) {
 
-			if (markedCategory != jList.getSelectedIndex()) {
-				category = jList.getSelectedIndex();
-				Set<Place> places = categoryMap.get(category);
-				if (places != null) {
-					places.forEach(p -> p.setVisible(true));
-				}
-				markedCategory = jList.getSelectedIndex();
-			} else
+			if (SwingUtilities.isRightMouseButton(mev)) {
 				jList.clearSelection();
+				return;
+			}
+			category = jList.getSelectedIndex();
+			Set<Place> places = categoryMap.get(category);
+
+			if (places != null) {
+				places.forEach(p -> p.setVisible(true));
+
+			}
 		}
 	}
 
@@ -331,6 +332,7 @@ public class MainWindow extends JFrame {
 
 				if (places != null) {
 					places.forEach(p -> p.setVisible(false));
+
 				}
 			}
 		}
