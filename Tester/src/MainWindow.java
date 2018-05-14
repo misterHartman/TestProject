@@ -72,7 +72,9 @@ public class MainWindow extends JFrame {
 		east.setLayout(new BoxLayout(east, BoxLayout.Y_AXIS));
 		add(east, BorderLayout.EAST);
 		east.add(new JLabel("Categories"));
-		east.add(new JScrollPane(jList));
+		JScrollPane scroll = new JScrollPane(jList);
+		scroll.setMaximumSize(new Dimension(500, 300));
+		east.add(scroll);
 		jList.addMouseListener(new JListListener());
 
 		JButton hideCategoryButton = new JButton("Hide category");
@@ -219,7 +221,7 @@ public class MainWindow extends JFrame {
 			mp = new MapPanel(file.getAbsolutePath());
 			scroll = new JScrollPane(mp);
 			add(scroll, BorderLayout.CENTER);
-			setSize((175 + mp.getW()), (125 + mp.getH()));
+			setSize((175 + mp.getW()), (135 + mp.getH()));
 			validate();
 			repaint();
 		}
